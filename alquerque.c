@@ -48,21 +48,29 @@ int show_board(){
 }
 
 
-Play get_possible_plays(int state[5][5], int player){
+Play get_possible_plays(int state[5][5], int player, int *n_plays){
     // 5 pieces * max_of_8_plays = 40
     Play possibles[40];
-
+    *n_plays = 0;
     for(int i = 0; i < MAX_SIZE; i++){
         for(int j = 0; j < MAX_SIZE; j++){
 
             if(board[i][j] != player) continue;
 
             // in pair lines odd columms has diagonal moviment
-            bool diagonal_on_odd = j % 2 == 0;
+            bool diagonal = i % 2 == j % 2;
 
             for(int k = i -1; k < i+1; k++){
                 for(int l = j-1; l < l+1; l++){
-                    
+                    if(board[k][l])
+
+                    Play move;
+                    move.x1 = i;
+                    move.y1 = j;
+                    move.x2 = k;
+                    move.y2 = l;
+                    possibles[*n_plays] = move;
+                    (*n_plays)++;
                 }
             }
         }
@@ -107,10 +115,17 @@ bool is_final_state(int board[5][5], int player){
     return false;
 }
 
+int** apply_play(int **board, Play play){
+    board[play.x2][play.y2] = board[play.x1][play.y1];
+    board[play.x1][play.y1] = 0;
+
+    return board;
+}
 
 int main (int argc, const char * argv[]) 
 {
     board[1][4] = board[2][3] = board[3][2] = board[4][1] = 1;
+    board = apply_play(board, Play());
     show_board();
     printf("%d", is_final_state(board, 1));
 }
