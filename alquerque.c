@@ -1,4 +1,6 @@
+#include <string.h>
 #include <stdio.h>
+#include <stdlib.h>
 
 #define MAX_SIZE 5
 
@@ -14,9 +16,53 @@ typedef struct
 
 typedef enum { false, true } bool;
 
-int board[MAX_SIZE][MAX_SIZE];
+int *clean_board[MAX_SIZE][MAX_SIZE];
 
-int show_board(){
+
+/**
+ * Find maximum between two numbers.
+ */
+int max(int num1, int num2)
+{
+    return (num1 > num2 ) ? num1 : num2;
+}
+
+/**
+ * Find minimum between two numbers.
+ */
+int min(int num1, int num2) 
+{
+    return (num1 > num2 ) ? num2 : num1;
+}
+
+int** createArray(int m, int n)
+{
+    int* values = calloc(m*n, sizeof(int));
+    int** rows = malloc(m*sizeof(int*));
+    for (int i=0; i<m; ++i)
+    {
+        rows[i] = values + i*n;
+    }
+    return rows;
+}
+
+void clone_matrix(int **orig, int **dest){
+    for(int i = 0; i < 5; i++){
+        for(int j = 0; j < 5; j++){
+            dest[i][j] = orig[i][j];
+        }
+    }
+}
+
+int destroyArray(int** arr)
+{
+    free(*arr);
+    free(arr);
+
+    return 0;
+}
+
+int show_board(int **board){
     char board2[MAX_SIZE][MAX_SIZE];
 
     for(int i =0; i < MAX_SIZE; i++){
@@ -48,63 +94,70 @@ int show_board(){
 }
 
 
-Play get_possible_plays(int state[5][5], int player, int *n_plays){
+Play* get_possible_plays(int **state, int player, int *n_plays){
     // 5 pieces * max_of_8_plays = 40
-    Play possibles[40];
-    *n_plays = 0;
+    Play *possibles[40];
+    int count = 0;
     for(int i = 0; i < MAX_SIZE; i++){
         for(int j = 0; j < MAX_SIZE; j++){
 
-            if(board[i][j] != player) continue;
+            if(state[i][j] != player) continue;
 
             // in pair lines odd columms has diagonal moviment
             bool diagonal = i % 2 == j % 2;
 
-            for(int k = i -1; k < i+1; k++){
-                for(int l = j-1; l < l+1; l++){
-                    if(board[k][l])
+            for(int k = max(0, i-1); k < min(i+1, MAX_SIZE-1); k++){
+                for(int l = max(0, i-1); l < min(i+1, MAX_SIZE-1); l++){
 
-                    Play move;
-                    move.x1 = i;
-                    move.y1 = j;
-                    move.x2 = k;
-                    move.y2 = l;
-                    possibles[*n_plays] = move;
-                    (*n_plays)++;
+                    if(state[k][l] != 0){
+                        continue;
+                    }
+
+                    Play *move;
+                    move->x1 = i;
+                    move->y1 = j;
+                    move->x2 = k;
+                    move->y2 = l;
+                    possibles[count] = move;
+                    count++;
                 }
             }
         }
     }
+
+    return *possibles;
 }
 
 
-bool is_final_state(int board[5][5], int player){
+bool is_final_state(int **board, int player){
 
     for(int i = 0; i < MAX_SIZE; i++){
         for(int j = 0; j < MAX_SIZE; j++){
 
             if(board[i][j] != player) continue;
 
-            // front row
-            if(i + 3 < MAX_SIZE){
-                if(board[i][j] && board[i+1][j] && board[i+2][j] && board[i+3][j])
-                    return true;
-            }
 
             // down front diagonal
             if(i + 3 < MAX_SIZE && j + 3 < MAX_SIZE){
+                printf("aqui2\n");
                 if(board[i][j] && board[i+1][j+1] && board[i+2][j+2] && board[i+3][j+3])
                     return true;
             }
-
+            // front row
+            else if(i + 3 < MAX_SIZE){
+                printf("aqui\n");
+                if(board[i][j] && board[i+1][j] && board[i+2][j] && board[i+3][j])
+                    return true;
+            }
             // down back diagonal
-            if(i - 3 >= 0 && j + 3 < MAX_SIZE){
+            else if(i - 3 >= 0 && j + 3 < MAX_SIZE){
+                printf("aqui3\n");
                 if(board[i][j] && board[i-1][j+1] && board[i-2][j+2] && board[i-3][j+3])
                     return true;
             }
-
             // columm
-            if(j + 3 < MAX_SIZE){
+            else if(j + 3 < MAX_SIZE){
+                printf("aqui4\n");
                 if(board[i][j] && board[i][j+1] && board[i][j+2] && board[i][j+3])
                     return true;
             }
@@ -116,6 +169,10 @@ bool is_final_state(int board[5][5], int player){
 }
 
 int** apply_play(int **board, Play play){
+
+    int **new_board = createArray(MAX_SIZE, MAX_SIZE);
+    clone_matrix(board, new_board);
+
     board[play.x2][play.y2] = board[play.x1][play.y1];
     board[play.x1][play.y1] = 0;
 
@@ -124,8 +181,30 @@ int** apply_play(int **board, Play play){
 
 int main (int argc, const char * argv[]) 
 {
-    board[1][4] = board[2][3] = board[3][2] = board[4][1] = 1;
-    board = apply_play(board, Play());
-    show_board();
-    printf("%d", is_final_state(board, 1));
+    // board[1][4] = board[2][3] = board[3][2] = board[4][1] = 1;
+    int *board[] = {(int[]){1,-1,1,-1,1},
+                          (int[]){0,0,0,0,0},
+                          (int[]){0,0,0,0,0},
+                          (int[]){0,0,0,0,0},
+                          (int[]){-1,1,-1,1,-1}
+    };
+    Play p;
+    p.x1 = 0;
+    p.y1 = 0;
+    p.x2 = 1;
+    p.y2 = 1;
+
+    int **board2 = apply_play(board, p);
+    show_board(board2);
+    printf("%d", is_final_state(board2, 1));
+
+    int *n;
+    Play* poss = get_possible_plays(board, 1, n);
+
+    for(int i = 0; i < 40; i++) {
+        printf(" (%d,%d) -> (%d,%d), ", poss[i].x1, poss[i].y1, poss[i].x2, poss[i].y2);
+    }
+
+    destroyArray(board);
+    destroyArray(board2);
 }
