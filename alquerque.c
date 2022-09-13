@@ -151,7 +151,7 @@ Play* get_possible_plays(int **state, int player, int *n_plays){
 }
 
 /*
-Receives:
+Receiveshttps://github.com/GuilhermeHiago/alquerque:
     int **board (the board to verify)
     int player (player value)
 Return:
@@ -208,38 +208,38 @@ int** apply_play(int **board, Play play){
     new_board[play.x1][play.y1] = 0;
 
     return new_board;
-}
+// }
 
-int main (int argc, const char * argv[]) 
-{
-    // board[1][4] = board[2][3] = board[3][2] = board[4][1] = 1;
-    int *board[] = {(int[]){1,-1,1,-1,1},
-                          (int[]){0,0,0,0,0},
-                          (int[]){0,0,0,0,0},
-                          (int[]){0,0,0,0,0},
-                          (int[]){-1,1,-1,1,-1}
-    };
+// int main (int argc, const char * argv[]) 
+// {
+//     // board[1][4] = board[2][3] = board[3][2] = board[4][1] = 1;
+//     int *board[] = {(int[]){1,-1,1,-1,1},
+//                           (int[]){0,0,0,0,0},
+//                           (int[]){0,0,0,0,0},
+//                           (int[]){0,0,0,0,0},
+//                           (int[]){-1,1,-1,1,-1}
+//     };
 
-    Play p;
-    p.x1 = 0;
-    p.y1 = 0;
-    p.x2 = 1;
-    p.y2 = 1;
+//     Play p;
+//     p.x1 = 0;
+//     p.y1 = 0;
+//     p.x2 = 1;
+//     p.y2 = 1;
 
-    int **board2 = apply_play(board, p);
-    // show_board(board2);
-    show_board(board);
-    printf("%d\n", is_final_state(board2, 1));
+//     int **board2 = apply_play(board, p);
+//     // show_board(board2);
+//     show_board(board);
+//     printf("%d\n", is_final_state(board2, 1));
 
-    int n_plays = 0;
-    Play* poss = get_possible_plays(board, 1, &n_plays);
+//     int n_plays = 0;
+//     Play* poss = get_possible_plays(board, 1, &n_plays);
 
-    printf("number of plays: %d\n", n_plays);
+//     printf("number of plays: %d\n", n_plays);
 
-    for(int i = 0; i < n_plays-1; i++) {
-        printf(" (%d,%d) -> (%d,%d), ", poss[i].x1, poss[i].y1, poss[i].x2, poss[i].y2);
-    }
+//     for(int i = 0; i < n_plays-1; i++) {
+//         printf(" (%d,%d) -> (%d,%d), ", poss[i].x1, poss[i].y1, poss[i].x2, poss[i].y2);
+//     }
 
-    destroyArray(board);
-    destroyArray(board2);
-}
+//     destroyArray(board);
+//     destroyArray(board2);
+// }
