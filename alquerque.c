@@ -167,22 +167,33 @@ bool is_final_state(int **board, int player){
 
             // down front diagonal
             if(i + 3 < MAX_SIZE && j + 3 < MAX_SIZE){
-                if(board[i][j] && board[i+1][j+1] && board[i+2][j+2] && board[i+3][j+3])
+
+                bool same_piece = board[i][j] == board[i+1][j+1] == board[i+2][j+2] == board[i+3][j+3] == player;
+
+                if(same_piece && board[i][j] && board[i+1][j+1] && board[i+2][j+2] && board[i+3][j+3])
                     return true;
             }
             // front row
             else if(i + 3 < MAX_SIZE){
-                if(board[i][j] && board[i+1][j] && board[i+2][j] && board[i+3][j])
+
+                bool same_pieces = board[i][j] == board[i+1][j] == board[i+2][j] == board[i+3][j] == player;
+
+                if(same_pieces && board[i][j] && board[i+1][j] && board[i+2][j] && board[i+3][j])
                     return true;
             }
             // down back diagonal
             else if(i - 3 >= 0 && j + 3 < MAX_SIZE){
-                if(board[i][j] && board[i-1][j+1] && board[i-2][j+2] && board[i-3][j+3])
+                bool same_pieces = board[i][j] == board[i-1][j+1] == board[i-2][j+2] == board[i-3][j+3] == player;
+
+                if(same_pieces && board[i][j] && board[i-1][j+1] && board[i-2][j+2] && board[i-3][j+3])
                     return true;
             }
             // columm
             else if(j + 3 < MAX_SIZE){
-                if(board[i][j] && board[i][j+1] && board[i][j+2] && board[i][j+3])
+
+                bool same_pieces = board[i][j] == board[i][j+1] == board[i][j+2] == board[i][j+3] == player;
+
+                if(same_pieces && board[i][j] && board[i][j+1] && board[i][j+2] && board[i][j+3])
                     return true;
             }
 
@@ -190,6 +201,10 @@ bool is_final_state(int **board, int player){
     }
 
     return false;
+}
+
+bool is_terminal(int **board){
+    return is_final_state(board, 1) || is_final_state(board, -1);
 }
 
 /*
@@ -208,7 +223,7 @@ int** apply_play(int **board, Play play){
     new_board[play.x1][play.y1] = 0;
 
     return new_board;
-// }
+}
 
 // int main (int argc, const char * argv[]) 
 // {
