@@ -1,6 +1,8 @@
 #include "alquerque.c"
 #include <time.h>
 #include <stdlib.h>
+#include <stdio.h>
+#include <math.h>
 
 #define BUDGET 100000
 
@@ -11,58 +13,6 @@ typedef struct{
     int reward;
 }node;
 
-int playout(int **state, int player){
-    
-    int** playout_state = createArray(MAX_SIZE, MAX_SIZE);
-    clone_matrix(state, playout_state);
-    int curr_player = 1;
-    
-    while(is_terminal(playout_state)){
-        int n_plays = 0;
-        Play *possible_plays = get_possible_plays(playout_state, curr_player, &n_plays);
-        curr_player *= -1;
-
-        Play next_action = possible_plays[rand() % n_plays];
-        playout_state = apply_play(playout_state, next_action);
-        free(possible_plays);
-    }
-    free(playout_state);
-    return is_final_state(playout_state, player)?1:0;
-}
-
-void simulate(node n, int budget){
-    for(int i = 0; i < budget; i++){
-        n.reward+= playout(n.state, 1);
-        n.n+= 1;
-    }
-}
-
-// Play sequential_halving(int **state, int budget){
-//     srand(time(NULL));
-
-//     int n_plays = 0;
-//     Play *action_children = get_possible_plays(state, 1, &n_plays);
-//     node *children = alloc(sizeof(node) * n_plays);
-
-//     for(int i=0; i < n_plays;i++){
-//         children[i].action = action_children[i];
-//         children[i].state = apply_play(state, children[i].action);
-//         children[i].n = 0;
-//         children[i].reward = 0;
-//     }
-
-//     int layer_size = n_plays;
-//     int layer_budget = budget;
-//     while(layer_size > 1){
-//         layer_budget = layer_budget/layer_size; //TODOlist
-//         sort(children, layer_budget);
-//     }
-//     Play action = children[0].action;
-//     free(children);
-//     free(action_children);
-//     return children[0].action;
-
-// }
 
 // Função de Ordenação por Seleção
 // Quick sort function
@@ -73,11 +23,11 @@ void quick_sort(node *a, int left, int right) {
     i = left;
     j = right;
     x = a[(left + right) / 2];
-    float x_value = x.reward / x.n;
-     
+    float x_value = (float)x.reward / x.n;
+    
     while(i <= j) {
-        float node_i_value = a[i].reward / a[i].n;
-        float node_j_value = a[j].reward / a[j].n;
+        float node_i_value = (float)a[i].reward / a[i].n;
+        float node_j_value = (float)a[j].reward / a[j].n;
 
         while(node_i_value > x_value && i < right) {
             i++;
@@ -102,28 +52,97 @@ void quick_sort(node *a, int left, int right) {
     }
 }
 
-int main(int argc, char const *argv[])
-{
-    node n1, n2, n3;
 
-    n1.n = 10;
-    n1.reward = 20;
+int playout(int **state){
+    
+    int** playout_state = createArray(MAX_SIZE, MAX_SIZE);
+    clone_matrix(state, playout_state);
+    int curr_player = 1;
+    int max_depth = 30;
+    int curr_depth = 0;
+    while(!is_terminal(playout_state)){
+        if(curr_depth >= max_depth) break;
+        curr_depth+=1;
+        int n_plays = 0;
+        Play *possible_plays = get_possible_plays(playout_state, curr_player, &n_plays);
+        curr_player *= -1;
 
-    n2.n = 20;
-    n2.reward = 20;
-
-    n3.n = 30;
-    n3.reward = 20;
-
-    node list[3] = {n1, n2, n3};
-
-    // list[0] = n1;
-
-    quick_sort(list, 0, 2);
-
-    for(int i = 0; i < 3; i++){
-        printf("pos %d n %d\n", i, list[i].n);
+        Play next_action = possible_plays[rand() % n_plays];
+        playout_state = apply_play(playout_state, next_action);
+        free(possible_plays);
     }
-    /* code */
-    return 0;
+    int reward = is_final_state(playout_state, curr_player)?1:0;
+    //show_board(state);
+    //show_board(playout_state);
+    free(playout_state);
+    return reward;
+}
+
+void simulate(node *n, int budget){
+    for(int i = 0; i < budget; i++){
+        n->reward = n->reward + playout(n->state);
+        n->n = n-> n + 1;
+    }
+}
+
+Play sequential_halving(int **state, int budget){
+    srand(time(NULL));
+    int n_plays = 0;
+    Play *action_children = get_possible_plays(state, 1, &n_plays);
+    node *children = malloc(sizeof(node) * n_plays);
+    for(int i=0; i < n_plays;i++){
+        children[i].action = action_children[i];
+        children[i].state = apply_play(state, children[i].action);
+        children[i].n = 0;
+        children[i].reward = 0;
+    }
+
+    int layer_plays = n_plays;
+    show_board(children[0].state);
+    while(layer_plays > 1){
+        int layer_budget = (int)floor(budget/(layer_plays*ceil(log2(n_plays))));
+        printf("layer %d size %d\n", layer_budget, layer_plays);
+        
+        for(int i = 0; i < layer_plays;i++){
+            simulate(&children[i], layer_budget);
+        }
+        layer_plays = (int)layer_plays/2;
+        quick_sort(children, 0, layer_budget);
+    }
+    Play action = children[0].action;
+    
+    
+    /*
+    for(int i = 0; i < n_plays; i++){
+        Play ac = children[i].action;
+        printf("(%d,%d)-->(%d,%d)  %d/%d\n", ac.x1, ac.y1, ac.x2, ac.y2, children[i].reward, children[i].n);
+    }
+    */
+
+
+    //show_board(children[0].state);
+    free(children);
+    free(action_children);
+    return children[0].action;
+
+}
+
+// gcc sequential_halving.c -lm -o run
+int main (int argc, const char * argv[]) 
+{
+    // board[1][4] = board[2][3] = board[3][2] = board[4][1] = 1;
+    int *board[] = {(int[]){1,-1,1,-1,1},
+                          (int[]){0,0,0,0,0},
+                          (int[]){0,0,0,0,0},
+                          (int[]){0,0,0,0,0},
+                          (int[]){-1,1,-1,1,-1}
+    };
+
+    Play p;
+    p.x1 = 0;
+    p.y1 = 0;
+    p.x2 = 1;
+    p.y2 = 1;
+
+    sequential_halving(board, 1000);
 }
