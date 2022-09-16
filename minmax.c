@@ -1,16 +1,19 @@
 #include <stdio.h>
 #include "alquerque.c"
+#define NUMLINES 28
 
 typedef struct {
      int x, y;
 } Pos;
 
+Pos** lines;
+
 //possible win lines
 Pos** generateLines(){
-	//10 horiz, 10 vert, 4 diag, 4 positions per line
-	Pos *aux = malloc((24*4)*sizeof(Pos));
-	Pos **lines = malloc(24*sizeof(Pos*));
-	for(int i = 0; i < 24; i++){
+	//10 horiz, 10 vert, 8 diag, 4 positions per line
+	Pos *aux = malloc((NUMLINES*4)*sizeof(Pos));
+	Pos **lines = malloc(NUMLINES*sizeof(Pos*));
+	for(int i = 0; i < NUMLINES; i++){
 		lines[i] = aux + i*4;
 	}
 	
@@ -45,6 +48,16 @@ Pos** generateLines(){
 			count += 1;
 		}
 	}
+	/*diag / */
+	for(int i0 = 0; i0 < 2; i0++){
+		for(int j0 = 4; j0 > 2; j0--){
+			for(int desloc = 0; desloc < 4; desloc++){
+				lines[count][desloc].x = i0+desloc;
+				lines[count][desloc].y = j0-desloc;
+			}
+			count += 1;
+		}
+	}
 	
 	return lines;
 }
@@ -54,52 +67,52 @@ void printPos(Pos p){
 }
 
 int heuristic(int** board){
+	//total
 	int sum = 0;
-	for(int i = 0; i < MAX_SIZE; i++){
-		for(int j = 0; j < MAX_SIZE; j++){
-			if(board[i][j] == 0) continue;
-			
-			// down front diagonal
-			if(i + 3 < MAX_SIZE && j + 3 < MAX_SIZE){
-				if(board[i][j] && board[i+1][j+1] && board[i+2][j+2] && board[i+3][j+3])
-					return 1;
+	//go through each possible line
+	for(int i = 0; i < NUMLINES; i++){
+		int cur = 0; //player
+		int count = 0; //player's pieces in a line
+		//position in line
+		for(int j = 0; j < 4; j++){
+			Pos xy = lines[i][j];
+			int p = board[xy.x][xy.y];
+			if(p == 0) continue;
+			//set last found to current player
+			if(cur == 0){
+				cur = p;
+				count = 1;
+				continue;
 			}
-			// front row
-			else if(i + 3 < MAX_SIZE){
-				if(board[i][j] && board[i+1][j] && board[i+2][j] && board[i+3][j])
-					return 1;
+			//two players, neither can form a line, abort
+			if(cur != p){
+				count = 0;
+				break;
 			}
-			// down back diagonal
-			else if(i - 3 >= 0 && j + 3 < MAX_SIZE){
-				if(board[i][j] && board[i-1][j+1] && board[i-2][j+2] && board[i-3][j+3])
-					return 1;
-			}
-			// columm
-			else if(j + 3 < MAX_SIZE){
-				if(board[i][j] && board[i][j+1] && board[i][j+2] && board[i][j+3])
-					return 1;
-			}
+			count++;
+		}
+		//at least two pieces in line
+		if(count > 1){
+			//won the game, return a value over maximum heuristic 
+			if(count == 4) return cur*(NUMLINES*4);
+			//otherwise add to sum 
+			sum += count*cur;
 		}
 	}
-	return false;
+	return sum;
 }
 
 int main(){
-	Pos** lines = generateLines();
-	for(int i = 0; i < 4; i++){
-		printPos(lines[21][i]);
-	}
-	printf("\n");
+	lines = generateLines();
 
-/*	int **board = createArray(MAX_SIZE, MAX_SIZE);
-	board[0][0] = 1;
-	board[1][0] = 1;
+	int **board = createArray(MAX_SIZE, MAX_SIZE);
+	board[0][0] = 0;
+	board[1][0] = 0;
 	board[2][0] = 1;
 	board[3][0] = 1;
 	board[4][0] = 1;
 	show_board(board);
 	printf("%d\n", heuristic(board));
 	destroyArray(board);
-	printf("test\n");*/
 	return 0;
 }
