@@ -1,6 +1,15 @@
 #include <stdio.h>
-#include "alquerque.c"
+//only include alquerque.c once
+#ifndef MAX_SIZE
+	#include "alquerque.c"
+#endif
+
 #define NUMLINES 28
+
+
+/********************
+* Heuristic
+********************/
 
 typedef struct {
      int x, y;
@@ -102,17 +111,66 @@ int heuristic(int** board){
 	return sum;
 }
 
-int main(){
+void minMaxInit(){
 	lines = generateLines();
+}
 
-	int **board = createArray(MAX_SIZE, MAX_SIZE);
-	board[0][0] = 0;
-	board[1][0] = 0;
-	board[2][0] = 1;
-	board[3][0] = 1;
-	board[4][0] = 1;
+/****************************
+*	Minmax
+****************************/
+typedef struct MMNode MMNode;
+struct MMNode{
+	Play lastPlay; 
+	int **board;
+	int player;
+	int value;	
+	int numChildren;
+	MMNode *children;
+};
+
+void expandNode(MMNode *n){
+	int nextPlayer = -1*n->player;
+	
+	int nPlays = -1; ////////////%FIXME%
+	Play* nextPlays = get_possible_plays(n->board, nextPlayer, &nPlays);
+	n->children = malloc(nPlays*sizeof(MMNode));
+	n->numChildren = nPlays;
+	printf("%d\n", n->numChildren);
+	for(int i = 0; i < nPlays; i++){
+		Play p = nextPlays[i];
+		int **b = apply_play(n->board, p);
+		n->children[i].lastPlay = p;
+		n->children[i].board = b;
+		n->children[i].player = nextPlayer;
+		n->children[i].value = heuristic(b);
+		n->children[i].numChildren = 0;
+		n->children[i].children = NULL;		
+	}
+}
+
+void printChildren(MMNode n){
+	printf("_|F (Player:%d Children:%d)\n", n.player, n.numChildren);
+	for(int i = 0; i < n.numChildren; i++){
+		MMNode node = n.children[i];
+		Play p = node.lastPlay;
+		printf("| [(%d, %d) -> (%d, %d)] (Player:%d Value:%d Children:%d)\n", p.x1, p.y1, p.x2, p.y2, node.player, node.value, node.numChildren);
+	}
+}
+
+int main(){
+	minMaxInit();
+	
+	int *board[] = {(int[]){1,-1,1,-1,1},
+					   (int[]){0,0,0,0,0},
+					   (int[]){0,0,0,0,0},
+					   (int[]){0,0,0,0,0},
+					   (int[]){-1,1,-1,1,-1}
+	};
 	show_board(board);
-	printf("%d\n", heuristic(board));
-	destroyArray(board);
+	
+	MMNode testNode; testNode.board = board; testNode.player = 1;
+	expandNode(&testNode);
+	printf("\n");
+	printChildren(testNode);
 	return 0;
 }
