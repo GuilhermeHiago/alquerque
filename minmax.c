@@ -6,7 +6,7 @@
 
 #define NUMLINES 28
 #define MAXVALUE 100
-#define MAXWIDTH 1500
+#define MAXWIDTH 170000
 
 
 /********************
@@ -155,22 +155,14 @@ void expandNode(MMNode *n){
 	}
 }
 
-//expand until depth
-void expandTo(int depth, MMNode *root){
-	//nodes to expand on cur depth
-	MMNode **curD = calloc(MAXWIDTH, sizeof(MMNode*));
-	//nodes on next depth 
-	MMNode **nextD = calloc(MAXWIDTH, sizeof(MMNode*));
-	//number of nodes on cur depth
-	int curN = 1;
-	
-	curD[0] = root;	
-	for(int d = 0; d < depth; d++){
+void parallelWork(int d, MMNode **curD, MMNode **nextD, int curN, int depth) {
+printf("d%d\n",d);
 		//expand nodes on current depth
 		for(int i = 0; i < curN; i++){
 			if(curD[i]->isFinal) continue;
 			expandNode(curD[i]);
 		}
+		if(d == depth-1) return;
 		//add children to nextD
 		int nextN = 0;
 		for(int i = 0; i < curN; i++){
@@ -185,9 +177,26 @@ void expandTo(int depth, MMNode *root){
 		nextD = aux;
 		//nextN is now curN
 		curN = nextN;
+}
+
+//expand until depth
+void expandTo(int depth, MMNode *root){
+	//nodes to expand on cur depth
+	MMNode **curD = calloc(MAXWIDTH, sizeof(MMNode*));
+	//nodes on next depth 
+	MMNode **nextD = calloc(MAXWIDTH, sizeof(MMNode*));
+	//number of nodes on cur depth
+	int curN = 1;
+	
+	curD[0] = root;	
+
+	int d = 0;
+
+//	#pragma omp parallel private ( d, curD, nextD, curN, depth )
+//	#pragma omp for schedule (dynamic)
+	for(d = 0; d < depth; d++){
+		parallelWork(d, curD, nextD, curN, depth);
 	}
-	free(curD);
-	free(nextD);
 	printf("[NEXT DEPTH REQUIRES MAXWIDTH>=%d]\n", curN);
 }
 
@@ -237,6 +246,8 @@ Play minmax(int **board, int player, int depth){
 	
 	//expand tree
 	expandTo(depth, &root);
+	Play aux;
+	return aux;
 	//recalculate values and get the max/min
 	int value = recalculate(&root);
 	
@@ -314,9 +325,10 @@ int main(){
 	printf("\n");*/
 	
 	int player = 1;
-	int depth = 4;
+	int depth = 500;
 	Play next = minmax(board, player, depth);
-	printf("Next play: (%d,%d)->(%d,%d)", next.x1, next.y1, next.x2, next.y2);
+	printf("done\n");
+	printf("Next play: (%d,%d)->(%d,%d)\n", next.x1, next.y1, next.x2, next.y2);
 	
 	return 0;
 }
